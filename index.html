@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StreamFlix PWA</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000"/>
+  <script src="https://cdn.jwplayer.com/libraries/Khpp2dHxlBJHC8MCmLnBuV2jK/DwDnJMniwF6EO9HC/riJ712ZmbHg=="></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #000;
+      color: #fff;
+    }
+
+    #player {
+      width: 100%;
+      aspect-ratio: 16/9;
+    }
+
+    .playlist, .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 1rem;
+    }
+
+    .thumb {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      cursor: pointer;
+      padding: 10px;
+      background: #111;
+      border-radius: 10px;
+    }
+
+    .thumb img {
+      width: 100px;
+      height: 56px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    .thumb span {
+      font-size: 1rem;
+    }
+
+    button {
+      background: #e50914;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    @media (min-width: 600px) {
+      .playlist {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="player"></div>
+
+<div class="controls">
+  <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+</div>
+
+<div class="playlist" id="episodeList"></div>
+
+<script>
+  const episodes = [
+    {
+      title: "Big Buck Bunny (HLS)",
+      file: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      image: "https://peach.blender.org/wp-content/uploads/title_anouncement.jpg"
+    },
+    {
+      title: "Sintel (MPD)",
+      file: "https://media.axprod.net/TestVectors/v7-MultiDRM-Sintel/Manifest.mpd",
+      image: "https://durian.blender.org/wp-content/uploads/2010/05/sintel_poster.jpg"
+    },
+    {
+      title: "YouTube Demo",
+      file: "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+      image: "https://img.youtube.com/vi/aqz-KE-bpKQ/hqdefault.jpg"
+    },
+    {
+      title: "Vimeo Demo",
+      file: "https://vimeo.com/76979871",
+      image: "https://i.vimeocdn.com/video/452001751_640.jpg"
+    }
+  ];
+
+  function setupPlayer(src) {
+    jwplayer("player").setup({
+      file: src,
+      autostart: true,
+      width: "100%",
+      aspectratio: "16:9",
+      controls: true
+    });
+  }
+
+  function generatePlaylist() {
+    const list = document.getElementById("episodeList");
+    episodes.forEach((ep, i) => {
+      const div = document.createElement("div");
+      div.className = "thumb";
+      div.innerHTML = `
+        <img src="${ep.image}" />
+        <span>${ep.title}</span>
+      `;
+      div.onclick = () => setupPlayer(ep.file);
+      list.appendChild(div);
+    });
+  }
+
+  function toggleTheme() {
+    document.body.style.background = document.body.style.background === "white" ? "#000" : "white";
+    document.body.style.color = document.body.style.color === "black" ? "#fff" : "black";
+  }
+
+  // Init
+  generatePlaylist();
+  setupPlayer(episodes[0].file);
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('PWA ready ✅'))
+      .catch(err => console.error('SW Error', err));
+  }
+</script>
+
+</body>
+</html>
