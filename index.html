@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Streamify Player</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-start p-4">
+
+  <div class="w-full max-w-4xl rounded-xl overflow-hidden shadow-lg mb-4">
+    <video id="video" class="plyr w-full aspect-video" controls playsinline></video>
+  </div>
+
+  <!-- Controls -->
+  <div class="flex flex-wrap justify-between w-full max-w-4xl items-center mb-4">
+    <div class="flex items-center gap-2">
+      <label for="themeToggle" class="text-sm">🌗 Theme</label>
+      <input type="checkbox" id="themeToggle" class="toggle-checkbox">
+    </div>
+    <button onclick="nextVideo()" class="bg-blue-600 px-4 py-2 rounded-lg">Next Video ⏭️</button>
+  </div>
+
+  <!-- Playlist -->
+  <div id="playlist" class="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-4xl w-full">
+    <!-- Playlist items are dynamically inserted here -->
+  </div>
+
+  <script>
+    const playlist = [
+      {
+        title: "Sony SAB Live (HLS)",
+        thumbnail: "https://i.ibb.co/6mLPzMb/sony.jpg",
+        src: "https://dai.google.com/ssai/event/nYSuS-LZSbapsC12DoZBmw/master.m3u8",
+        type: "application/x-mpegURL"
+      },
+      {
+        title: "BigBuckBunny MP4",
+        thumbnail: "https://peach.blender.org/wp-content/uploads/title_anouncement.jpg",
+        src: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+        type: "application/x-mpegURL"
+      },
+      {
+        title: "YouTube Trailer",
+        thumbnail: "https://img.youtube.com/vi/aqz-KE-bpKQ/0.jpg",
+        src: "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+        type: "youtube"
+      }
+    ];
+
+    let currentIndex = 0;
+    const player = new Plyr('#video', { autoplay: true });
+    const video = document.querySelector('#video');
+
+    function loadVideo(index) {
+      currentIndex = index;
+      const item = playlist[index];
+      if (item.type === 'application/x-mpegURL') {
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(item.src);
+          hls.attachMedia(video);
+          player.play();
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = item.src;
+          video.play();
+        }
+      } else if (item.type === 'youtube') {
+        player.source = {
+          type: 'video',
+          sources: [{ src: item.src, provider: 'youtube' }]
+        };
+      } else {
+        video.src = item.src;
+        player.play();
+      }
+      localStorage.setItem("lastIndex", index);
+    }
+
+    function nextVideo() {
+      currentIndex = (currentIndex + 1) % playlist.length;
+      loadVideo(currentIndex);
+    }
+
+    // Playlist thumbnails
+    const list = document.getElementById('playlist');
+    playlist.forEach((item, index) => {
+      const thumb = document.createElement('div');
+      thumb.className = "cursor-pointer";
+      thumb.innerHTML = `
+        <img src="${item.thumbnail}" class="rounded-xl w-full aspect-video object-cover" />
+        <p class="text-center mt-1 text-sm">${item.title}</p>
+      `;
+      thumb.onclick = () => loadVideo(index);
+      list.appendChild(thumb);
+    });
+
+    // Theme toggle
+    const toggle = document.getElementById('themeToggle');
+    toggle.checked = localStorage.getItem('theme') === 'light';
+    setTheme(toggle.checked);
+    toggle.addEventListener('change', () => {
+      setTheme(toggle.checked);
+    });
+
+    function setTheme(light) {
+      if (light) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // Resume last played video
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = parseInt(localStorage.getItem("lastIndex")) || 0;
+      loadVideo(saved);
+    });
+  </script>
+
+  <style>
+    .toggle-checkbox {
+      appearance: none;
+      width: 40px;
+      height: 20px;
+      background-color: #ccc;
+      border-radius: 20px;
+      position: relative;
+      cursor: pointer;
+    }
+    .toggle-checkbox::before {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+    .toggle-checkbox:checked::before {
+      transform: translateX(20px);
+    }
+  </style>
+
+</body>
+</html>
